@@ -2,6 +2,8 @@
 #include <glad/glad.h>
 #include <SDL2/SDL.h>
 #include <vector>
+#include <fstream>
+#include <string>
 
 int gScreenHeight = 480;
 int gScreenWidth = 640;
@@ -12,23 +14,21 @@ GLuint gVertexArrayObject = 0; // VAO
 GLuint gVertexBufferObject = 0; // VBO
 GLuint gGraphicsPipelineShaderProgram = 0; // Graphics pipeline handle
 
-// Vertex shader executes once per vertex
-// In charge of vertex positions
-const std::string gVertexShaderSrc = 
-  "#version 410 core\n"
-  "in vec4 position;\n"
-  "void main() { gl_Position = vec4(position.x, position.y, position.z, position.w); }";
 
-// Fragment shader executes once per fragment
-// Determines the colors of each fragment
-const std::string gFragmentShaderSrc = 
-  "#version 410 core\n"
-  "uniform vec2 u_resolution;\n"
-  "out vec4 color;\n"
-  "void main() {\n"
-  "    vec2 st = gl_FragCoord.xy / u_resolution;\n"
-  "    color = vec4(st.x, st.y, 0.0, 1.0);\n"
-  "}";
+std::string LoadShaderAsString(const std::string& filename) {
+  std::string result = "";
+  std::string line = "";
+  std::ifstream file(filename.c_str());
+  if (!file.is_open()) {
+    std::cerr << "Shader load failed\n";
+    exit(1);
+  }
+  while (std::getline(file, line)) {
+    result += line + '\n';
+  }
+  file.close();
+  return result;
+}
 
 void GetGLInfo() {
   std::cout << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
@@ -140,6 +140,14 @@ GLuint CreateShaderProgram(
 }
 
 void CreateGraphicsPipeline () {
+  // Vertex shader executes once per vertex
+  // In charge of vertex positions
+  const std::string gVertexShaderSrc = LoadShaderAsString("shaders/vert.glsl");
+   
+  // Fragment shader executes once per fragment
+  // Determines the colors of each fragment
+  const std::string gFragmentShaderSrc = LoadShaderAsString("shaders/frag.glsl");
+
   gGraphicsPipelineShaderProgram = CreateShaderProgram(
     gVertexShaderSrc, gFragmentShaderSrc
   ); 
